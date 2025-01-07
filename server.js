@@ -6,8 +6,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static('public'));
-
 const rooms = {}; // Room storage
 
 io.on('connection', (socket) => {
