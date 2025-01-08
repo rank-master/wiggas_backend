@@ -4,7 +4,12 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "https://creative-mousse-d64585.netlify.app",
+    methods: ["GET", "POST"]
+  }
+});
 
 let rooms = {};
 
