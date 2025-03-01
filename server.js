@@ -1,133 +1,41 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+// Function to handle Sign Up
+signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = {
+        name: signupForm.querySelector('input[type="text"]').value,
+        email: signupForm.querySelector('input[type="email"]').value,
+        password: signupForm.querySelector('input[type="password"]').value,
+    };
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: ["https://creative-mousse-d64585.netlify.app"],
-    methods: ["GET", "POST"]
-  }
+    const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+    });
+
+    const result = await response.json();
+    alert(result.message);
 });
 
-let rooms = {};
+// Function to handle Login
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = {
+        email: loginForm.querySelector('input[type="email"]').value,
+        password: loginForm.querySelector('input[type="password"]').value,
+    };
 
-// Serve frontend files
-app.use(express.static(__dirname));
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+    });
 
-// Socket.IO connection
-io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
-
-  socket.on('create-room', (roomName) => {
-    if (!rooms[roomName]) {
-      rooms[roomName] = {
-        players: [socket.id],
-        board: Array(9).fill(null),
-        turn: 'X',
-        timer: null
-      };
-      socket.join(roomName);
-      io.to(socket.id).emit('room-waiting');
-      updateRoomList();
-    }
-  });
-
-  socket.on('join-room', (roomName) => {
-    const room = rooms[roomName];
-    if (room && room.players.length < 2) {
-        room.players.push(socket.id);
-        socket.join(roomName);
-        console.log(`Player ${socket.id} joined room: ${roomName}`);
-
-        io.to(room.players[0]).emit('init', { symbol: 'X', startingTurn: true });
-        io.to(socket.id).emit('init', { symbol: 'O', startingTurn: false });
-
-        io.to(roomName).emit('start-game', { board: room.board, turn: room.turn });
-        startTimer(roomName);
+    const result = await response.json();
+    if (response.ok) {
+        localStorage.setItem('token', result.token); // Save token for future use
+        alert(result.message);
     } else {
-        io.to(socket.id).emit('room-full', { message: "Room is full or doesn't exist." });
+        alert(result.message);
     }
-  });
-
-  socket.on('request-room-list', () => {
-    updateRoomList();
-  });
-
-  function updateRoomList() {
-    const availableRooms = Object.keys(rooms).filter((room) => rooms[room].players.length < 2);
-    io.emit('room-list', availableRooms);
-  }
-
-  socket.on('make-move', (index) => {
-    const roomName = [...socket.rooms][1];
-    const room = rooms[roomName];
-    if (room && room.board[index] === null) {
-      room.board[index] = room.turn;
-      room.turn = room.turn === 'X' ? 'O' : 'X';
-
-      io.to(roomName).emit('update-game', { board: room.board, turn: room.turn });
-      clearTimeout(room.timer);
-      startTimer(roomName);
-
-      const winner = checkWinner(room.board);
-      if (winner || !room.board.includes(null)) {
-        io.to(roomName).emit('game-over', { winner: winner || 'Draw' });
-        delete rooms[roomName];
-        updateRoomList();
-      }
-    }
-  });
-
-  function startTimer(roomName) {
-    const room = rooms[roomName];
-    if (room.players.length === 2) {
-      room.timer = setTimeout(() => {
-        io.to(roomName).emit('game-over', { winner: 'Opponent' });
-        delete rooms[roomName];
-        updateRoomList();
-      }, 60000); // 60 seconds timer
-    }
-  }
-
-  socket.on('chat-message', (msg) => {
-    const roomName = [...socket.rooms][1];
-    io.to(roomName).emit('message', msg);
-  });
-
-  socket.on('disconnect', () => {
-    for (const roomName in rooms) {
-      const room = rooms[roomName];
-      room.players = room.players.filter((id) => id !== socket.id);
-      if (room.players.length === 0) {
-        delete rooms[roomName];
-      } else {
-        io.to(roomName).emit('game-over', { winner: 'Opponent Disconnected' });
-        delete rooms[roomName];
-      }
-    }
-    updateRoomList();
-    console.log('A user disconnected:', socket.id);
-  });
 });
-
-const port = process.env.PORT || 3000;  // Use Render's dynamic port or default to 3000
-server.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
-
-function checkWinner(board) {
-  const winPatterns = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8],
-    [0, 3, 6], [1, 4, 7], [2, 5, 8],
-    [0, 4, 8], [2, 4, 6]
-  ];
-
-  for (const [a, b, c] of winPatterns) {
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a];
-    }
-  }
-  return null;
-}
