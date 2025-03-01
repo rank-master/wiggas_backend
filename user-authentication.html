@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up & Login</title>
+    <style>
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: linear-gradient(135deg, #86e3ce, #d3f8e2);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+            color: #ff7a59;
+        }
+
+        .toggle-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .toggle-buttons button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 25px;
+            background: #ffdf7c;
+            color: #333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-buttons button.active {
+            background: #ff7a59;
+            color: #fff;
+        }
+
+        form {
+            display: none;
+        }
+
+        form.active {
+            display: block;
+        }
+
+        form input {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        form button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: #ff7a59;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        form button:hover {
+            background: #ff5c38;
+        }
+
+        .message {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #5d5d5d;
+        }
+
+        .message a {
+            color: #ff7a59;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .message a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Container -->
+    <div class="container">
+        <h2>Welcome to ViralHit</h2>
+
+        <!-- Toggle Buttons -->
+        <div class="toggle-buttons">
+            <button id="signup-btn" class="active">Sign Up</button>
+            <button id="login-btn">Login</button>
+        </div>
+
+        <!-- Sign Up Form -->
+        <form id="signup-form" class="active">
+            <h3>Create an Account</h3>
+            <input type="text" placeholder="Full Name" required />
+            <input type="email" placeholder="Email Address" required />
+            <input type="password" placeholder="Password" required />
+            <button type="submit">Sign Up</button>
+            <div class="message">Already have an account? <a href="#" onclick="switchToLogin()">Login here</a>.</div>
+        </form>
+
+        <!-- Login Form -->
+        <form id="login-form">
+            <h3>Login to Your Account</h3>
+            <input type="email" placeholder="Email Address" required />
+            <input type="password" placeholder="Password" required />
+            <button type="submit">Login</button>
+            <div class="message">Don't have an account? <a href="#" onclick="switchToSignup()">Sign up here</a>.</div>
+        </form>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Get references to elements
+        const signupBtn = document.getElementById('signup-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const signupForm = document.getElementById('signup-form');
+        const loginForm = document.getElementById('login-form');
+
+        // Function to show Sign Up form
+        function switchToSignup() {
+            signupForm.classList.add('active');
+            loginForm.classList.remove('active');
+            signupBtn.classList.add('active');
+            loginBtn.classList.remove('active');
+        }
+
+        // Function to show Login form
+        function switchToLogin() {
+            loginForm.classList.add('active');
+            signupForm.classList.remove('active');
+            loginBtn.classList.add('active');
+            signupBtn.classList.remove('active');
+        }
+
+        // Event listeners for toggle buttons
+        signupBtn.addEventListener('click', switchToSignup);
+        loginBtn.addEventListener('click', switchToLogin);
+
+        // Prevent default form submission (for demonstration purposes)
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Sign Up Successful! (Mock Submission)');
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Login Successful! (Mock Submission)');
+        });
+
+        // Function to handle Sign Up
+signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = {
+        name: signupForm.querySelector('input[type="text"]').value,
+        email: signupForm.querySelector('input[type="email"]').value,
+        password: signupForm.querySelector('input[type="password"]').value,
+    };
+
+    const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+    });
+
+    const result = await response.json();
+    alert(result.message);
+});
+
+// Function to handle Login
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = {
+        email: loginForm.querySelector('input[type="email"]').value,
+        password: loginForm.querySelector('input[type="password"]').value,
+    };
+
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+        localStorage.setItem('token', result.token); // Save token for future use
+        alert(result.message);
+    } else {
+        alert(result.message);
+    }
+});
+    </script>
+</body>
+</html>
